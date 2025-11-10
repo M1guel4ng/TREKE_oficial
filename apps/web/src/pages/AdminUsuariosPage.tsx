@@ -1,4 +1,4 @@
-import AdminUsuariosTable from '../features/usuarios/components/AdminUsuariosTable';
+import AdminUsuariosTable from '../features/usuarios/components.usuarios/AdminUsuariosTable';
 
 
 export default function AdminUsuariosPage(){

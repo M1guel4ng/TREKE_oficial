@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
-import PerfilView from '../features/usuarios/components/PerfilView';
-import PerfilEditForm from '../features/usuarios/components/PerfilEditForm';
+import PerfilView from '../features/usuarios/components.usuarios/PerfilView';
+import PerfilEditForm from '../features/usuarios/components.usuarios/PerfilEditForm';
 
 
 export default function PerfilPage() {
