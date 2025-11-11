@@ -1,4 +1,7 @@
 import { testConnection } from "./src/config/database/database";
+import 'dotenv/config';
+
+
 
 testConnection()
   .then(() => {

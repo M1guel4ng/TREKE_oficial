@@ -94,4 +94,14 @@ export const UsuariosController = {
       res.status(400).json({ ok: false, error: e.message });
     }
   },
+
+   eliminar: async (req: Request, res: Response) => {
+    try {
+      const usuarioId = +req.params.id;
+      const data = await svc.eliminarUsuario(0, usuarioId);
+      res.json({ ok: true, data });
+    } catch (e:any) {
+      res.status(400).json({ ok:false, error: e.message });
+    }
+  },
 };

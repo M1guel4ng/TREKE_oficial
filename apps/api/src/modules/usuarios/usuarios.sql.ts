@@ -97,4 +97,9 @@ export const SQL = {
   `,
   cambiarRol: `UPDATE usuario SET rol_id=$2, updated_at=now() WHERE id=$1 RETURNING id, email, rol_id;`,
   suspender:   `UPDATE usuario SET estado='suspendido', updated_at=now() WHERE id=$1 RETURNING id, email, estado;`,
+
+  activar:    `UPDATE usuario SET estado='activo', updated_at=now() WHERE id=$1 RETURNING id, email, estado;`,
+  
+   eliminar:   `UPDATE usuario SET deleted_at=now(), updated_at=now() WHERE id=$1 RETURNING id, email, deleted_at;`,
+
 };

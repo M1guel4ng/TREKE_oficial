@@ -109,3 +109,8 @@ export async function suspenderUsuario(_actorId: number, usuarioId: number) {
   const r = await withTx(async (client: PoolClient) => client.query(SQL.suspender, [usuarioId]));
   return r.rows[0];
 }
+
+export async function eliminarUsuario(_actorId: number, usuarioId: number) {
+  const r = await withTx(async (client) => client.query(SQL.eliminar, [usuarioId]));
+  return r.rows[0];
+}

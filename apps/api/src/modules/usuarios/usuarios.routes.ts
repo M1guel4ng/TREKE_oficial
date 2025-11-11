@@ -19,5 +19,7 @@ r.patch('/usuarios/:id/email', C.updateEmail);
 r.get('/admin/usuarios', C.listar);
 r.patch('/admin/usuarios/:id/rol', C.cambiarRol);
 r.patch('/admin/usuarios/:id/suspender', C.suspender);
+r.delete('/admin/usuarios/:id', C.eliminar);
+
 
 export default r;
