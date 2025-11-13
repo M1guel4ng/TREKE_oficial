@@ -1,22 +1,24 @@
-// Pequeño wrapper para fetch con manejo de errores
-const API_BASE = '' as const; // con proxy, base = "" y siempre empiezas con /api
+const API_BASE = '' as const;
 
 type Options = RequestInit & { json?: any };
 
 async function request<T = any>(path: string, opts: Options = {}): Promise<T> {
-  const { json, headers, ...rest } = opts;
+  const { json, headers, method, ...rest } = opts;
+  const token = localStorage.getItem('treke_token');
+
   const res = await fetch(API_BASE + path, {
+    method: method || (json ? 'POST' : 'GET'),
     headers: {
+      'Accept': 'application/json',
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(headers || {}),
     },
-    body: json ? JSON.stringify(json) : undefined,
+    body: json !== undefined ? JSON.stringify(json) : undefined,
     ...rest,
   });
 
-  // Intentamos parsear JSON aunque haya error
   const data = await res.json().catch(() => ({}));
-
   if (!res.ok) {
     const msg = (data && (data.error || data.message)) || `HTTP ${res.status}`;
     throw new Error(msg);
@@ -24,10 +26,23 @@ async function request<T = any>(path: string, opts: Options = {}): Promise<T> {
   return data as T;
 }
 
-export const api = {
-  get:   <T = any>(path: string)           => request<T>(path),
-  post:  <T = any>(path: string, json?: any) => request<T>(path, { method: 'POST',  json }),
-  put:   <T = any>(path: string, json?: any) => request<T>(path, { method: 'PUT',   json }),
-  patch: <T = any>(path: string, json?: any) => request<T>(path, { method: 'PATCH', json }),
-  del:   <T = any>(path: string)             => request<T>(path, { method: 'DELETE' }),
+interface ApiClient {
+  get<T = any>(path: string): Promise<T>;
+  get<T = any>(path: string, init: RequestInit): Promise<T>;
+  post<T = any>(path: string, json?: any): Promise<T>;
+  post<T = any>(path: string, json: any, init: RequestInit): Promise<T>;
+  put<T = any>(path: string, json?: any): Promise<T>;
+  put<T = any>(path: string, json: any, init: RequestInit): Promise<T>;
+  patch<T = any>(path: string, json?: any): Promise<T>;
+  patch<T = any>(path: string, json: any, init: RequestInit): Promise<T>;
+  del<T = any>(path: string): Promise<T>;
+  del<T = any>(path: string, init: RequestInit): Promise<T>;
+}
+
+export const api: ApiClient = {
+  get(path, init?)  { return request(path, { method: 'GET', ...(init || {}) }); },
+  post(path, json?, init?) { return request(path, { method: 'POST', json, ...(init || {}) }); },
+  put(path, json?, init?)  { return request(path, { method: 'PUT', json, ...(init || {}) }); },
+  patch(path, json?, init?) { return request(path, { method: 'PATCH', json, ...(init || {}) }); },
+  del(path, init?) { return request(path, { method: 'DELETE', ...(init || {}) }); },
 };

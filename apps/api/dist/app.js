@@ -1,29 +1,20 @@
-import express from "express";
-import cors from "cors";
-import path from "path";
-import usuariosRoutes from './modules/usuarios/usuarios.routes';
-import marketRoutes from "./modules/market/market.routes";
-import reportRoutes from "./modules/report/report.routes";
-import reportesGeneral from "./routes/reportes.general";
-import reportesMonetizacion from "./routes/reportes.monetizacion";
-
-const app = express();
-
-app.use(cors({ origin: ["http://localhost:5173"], credentials: true }));
-
-app.use(express.json());
-app.use('/api', usuariosRoutes);
-app.use("/api", marketRoutes);
-app.use("/api", reportRoutes);
-
-app.use("/api/reportesgeneral", reportesGeneral);
-app.use("/api/admin/reportes/monetizacion", reportesMonetizacion);
-
-
-
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const usuarios_routes_1 = __importDefault(require("./modules/usuarios/usuarios.routes"));
+const market_routes_1 = __importDefault(require("./modules/market/market.routes"));
+const app = (0, express_1.default)();
+app.use((0, cors_1.default)({ origin: ["http://localhost:5173"], credentials: true }));
+app.use(express_1.default.json());
+app.use('/api', usuarios_routes_1.default);
+app.use("/api", market_routes_1.default);
 // 🔹 Sirve un HTML simple en la raíz
 app.get("/", (_req, res) => {
-  res.send(`
+    res.send(`
     <html>
       <head>
         <title>Servidor TREKE 🌱</title>
@@ -45,10 +36,8 @@ app.get("/", (_req, res) => {
     </html>
   `);
 });
-
 // Endpoint de prueba JSON
 app.get("/api/prueba", (_req, res) => {
-  res.json({ ok: true, service: "TREKE API", time: new Date().toISOString() });
+    res.json({ ok: true, service: "TREKE API", time: new Date().toISOString() });
 });
-
-export default app;
+exports.default = app;

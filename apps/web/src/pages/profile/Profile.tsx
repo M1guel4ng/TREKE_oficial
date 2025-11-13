@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import Header from "../../components/Header";
 import { fetchPanel, getCurrentUserId } from "../../api/profile";
 import type { PanelResponse } from "../../api/profile";
+import { Link } from "react-router-dom";
+
+
 
 type Tab = "pubs" | "movs" | "impact";
 
@@ -78,7 +81,22 @@ export default function Profile() {
               <p className="text-sm text-neutral-300">{data.usuario.acerca_de}</p>
             )}
           </div>
-          <a href="/settings" className="rounded-lg border border-neutral-700 px-3 py-2 text-sm">Configuración</a>
+
+          {/* Acciones del perfil (mover aquí el botón de reportes) */}
+          <div className="flex items-center gap-2">
+            <Link
+              to="/settings"
+              className="rounded-lg border border-neutral-700 px-3 py-2 text-sm hover:bg-neutral-800"
+            >
+              Configuración
+            </Link>
+            <Link
+              to="/reports"  // usa /reports (y también mapeamos /reportes en rutas)
+              className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-2 text-sm font-semibold text-white"
+            >
+              Ver reportes
+            </Link>
+          </div>
         </div>
 
         {/* KPIs */}

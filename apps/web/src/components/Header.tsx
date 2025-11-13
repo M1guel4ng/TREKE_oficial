@@ -14,7 +14,7 @@ export default function Header({ title, onBack }: { title?: string; onBack?: () 
         <h1 className="text-base md:text-lg font-semibold text-neutral-100 truncate">{title}</h1>
         <div className="ml-auto flex items-center gap-2">
           <Link to="/marketplace" className="hidden sm:inline text-sm text-neutral-300 hover:text-white">Marketplace</Link>
-          <Link to="/perfil/1" className="inline-flex items-center rounded-xl bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700">
+          <Link to="/perfil" className="inline-flex items-center rounded-xl bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700">
             Mi Perfil
           </Link>
         </div>

@@ -23,7 +23,7 @@ export default function Navbar() {
             Entrar
           </Link>
           <Link
-            to="/perfil/1"
+            to="/perfil"
             className="inline-flex items-center rounded-xl bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600"
           >
             Mi Perfil
