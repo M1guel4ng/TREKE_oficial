@@ -6,6 +6,8 @@ import marketRoutes from "./modules/market/market.routes";
 import reportRoutes from "./modules/report/report.routes";
 import reportesGeneral from "./routes/reportes.general";
 import reportesMonetizacion from "./routes/reportes.monetizacion";
+import creditosRoutes from "./modules/creditos/creditos.routes";
+
 
 const app = express();
 
@@ -19,7 +21,7 @@ app.use("/api", reportRoutes);
 app.use("/api/reportesgeneral", reportesGeneral);
 app.use("/api/admin/reportes/monetizacion", reportesMonetizacion);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-
+app.use("/api", creditosRoutes);
 
 
 // 🔹 Sirve un HTML simple en la raíz

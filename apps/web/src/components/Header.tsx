@@ -17,6 +17,12 @@ export default function Header({ title, onBack }: { title?: string; onBack?: () 
           <Link to="/perfil" className="inline-flex items-center rounded-xl bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700">
             Mi Perfil
           </Link>
+          <Link
+            to="/creditos/paquetes"
+            className="inline-flex items-center rounded-full border border-emerald-500/70 bg-emerald-600 px-3 py-1.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 hover:border-emerald-400 transition-colors"
+          >
+          Comprar créditos
+          </Link>
         </div>
       </div>
     </header>

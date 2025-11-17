@@ -9,6 +9,7 @@ import ReportsRouter from "./pages/reports/ReportsRouter";
 import GeneralReports from "./pages/reports/ReportsGeneral";
 import AdminMonetization from "./pages/reports/AdminMonetizacion";
 import MarketCreate from "./pages/Marketplace/MarketCreate";
+import ComprarPaquetes from "./pages/Creditos/ComprarPaquetes";
 
 
 
@@ -65,6 +66,8 @@ export default function App() {
           <Route path="/reportesgeneral" element={<GeneralReports />} />
           <Route path="/admin/reportes/monetizacion" element={<AdminMonetization />} />
           <Route path="/market/nueva" element={<MarketCreate />} />
+          <Route path="/creditos/paquetes" element={<ComprarPaquetes />} />
+
         </Routes>
       </div>
     </BrowserRouter>
