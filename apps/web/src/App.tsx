@@ -10,6 +10,7 @@ import GeneralReports from "./pages/reports/ReportsGeneral";
 import AdminMonetization from "./pages/reports/AdminMonetizacion";
 import MarketCreate from "./pages/Marketplace/MarketCreate";
 import ComprarPaquetes from "./pages/Creditos/ComprarPaquetes";
+import IntercambiosPage from "./pages/profile/IntercambiosPage";
 
 
 
@@ -67,6 +68,8 @@ export default function App() {
           <Route path="/admin/reportes/monetizacion" element={<AdminMonetization />} />
           <Route path="/market/nueva" element={<MarketCreate />} />
           <Route path="/creditos/paquetes" element={<ComprarPaquetes />} />
+           <Route path="/perfil/intercambios" element={<IntercambiosPage />} />
+
 
         </Routes>
       </div>

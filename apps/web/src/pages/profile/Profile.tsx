@@ -96,6 +96,13 @@ export default function Profile() {
             >
               Ver reportes
             </Link>
+            <Link
+              to="/perfil/intercambios"
+              className="mt-2 inline-flex text-xs text-emerald-400 hover:underline"
+            >
+              Ver propuestas e intercambios →
+            </Link>
+            
           </div>
         </div>
 
