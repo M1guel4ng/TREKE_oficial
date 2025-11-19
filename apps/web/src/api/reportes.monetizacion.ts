@@ -28,11 +28,7 @@ export type SaldoUsuario = {
 };
 
 export type ConsumoVsGeneracion = {
-  origen:
-    | "compra_directa"
-    | "generado_intercambios"
-    | "gastado_intercambios"
-    | "otros";
+  origen: "compra_directa" | "generado_intercambios" | "gastado_intercambios" | "otros";
   total: string | number;
 };
 
@@ -42,8 +38,6 @@ export type Suscripciones = {
   usuarios_con_suscripcion: number;
   ratio_activas: string | number | null;
 };
-
-// Wrappers que devuelven data
 
 export const getIngresosTotal = async () => {
   const r = await api.get<{ ok: boolean; data: IngresosTotal }>(

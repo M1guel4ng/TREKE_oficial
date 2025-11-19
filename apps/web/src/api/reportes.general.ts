@@ -1,5 +1,7 @@
 import { api } from "./client";
 
+/* TIPOS */
+
 export type RankingItem = {
   usuario_id: number;
   email: string;
@@ -40,33 +42,29 @@ export type ResumenSistema = {
   };
 };
 
-/** NUEVAS INTERFACES para los otros indicadores */
-
 export type ImpactoPorCategoriaItem = {
   categoria_id: number;
   categoria: string;
-  nombre_factor: string;
-  unidad_medida: string;
-  total_peso_kg: string | number | null;
-  valor_por_kg: string | number | null;
-  total_impacto: string | number | null;
+  co2: number;
+  energia: number;
+  agua: number;
+  residuos: number;
+  creditos: number;
 };
 
 export type ActividadSostenibleItem = {
-  total_usuarios_participantes: number;
-  total_creditos_otorgados: string | number | null;
   tipo_actividad: string;
+  total_usuarios_participantes: number;
+  total_creditos_otorgados: number;
 };
 
 export type UsuariosActivosRolItem = {
   rol_id: number;
   rol: string;
-  usuarios_activos_30d: number;
+  usuarios_activos: number;
 };
 
-// ==========================
-// Wrappers que devuelven data
-// ==========================
+/* WRAPPERS */
 
 export const getRanking = async (limit = 10) => {
   const r = await api.get<{ ok: boolean; data: RankingItem[] }>(
@@ -102,8 +100,6 @@ export const getResumen = async () => {
   );
   return (r as any).data ?? (r as any);
 };
-
-// NUEVOS endpoints
 
 export const getImpactoPorCategoria = async () => {
   const r = await api.get<{ ok: boolean; data: ImpactoPorCategoriaItem[] }>(
