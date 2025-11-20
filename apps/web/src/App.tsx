@@ -5,16 +5,13 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import Profile from "./pages/profile/Profile";
 import Marketplace from "./pages/Marketplace/Marketplace";
 import MarketDetailPage from "./pages/Marketplace/MarketDetail";
-import ReportsRouter from "./pages/reports/ReportsRouter";
-import GeneralReports from "./pages/reports/ReportsGeneral";
-import AdminMonetization from "./pages/reports/AdminMonetizacion";
 import MarketCreate from "./pages/Marketplace/MarketCreate";
 import ComprarPaquetes from "./pages/Creditos/ComprarPaquetes";
 import IntercambiosPage from "./pages/profile/IntercambiosPage";
 
-import AdminReportsPage from "./pages/admin/AdminReportsPage";
-import UserReportsPage from "./pages/auth/UserReportsPage";
-import OrgReportsPage from "./pages/ORG/OrgReportsPage";
+import AdminReportsPage from "./pages/Reportes/AdminReportsPage";
+import UserReportsPage from "./pages/Reportes/UserReportsPage";
+import OrgReportsPage from "./pages/Reportes/OrgReportsPage";
 
 
 
@@ -67,19 +64,15 @@ export default function App() {
           <Route path="/perfil" element={<Profile />} />
           <Route path="/market" element={<Marketplace />} />
           <Route path="/market/:id" element={<MarketDetailPage />} />
-          <Route path="/reports" element={<ReportsRouter />} />
-          <Route path="/reportesgeneral" element={<GeneralReports />} />
-          <Route path="/admin/reportes/monetizacion" element={<AdminMonetization />} />
           <Route path="/market/nueva" element={<MarketCreate />} />
           <Route path="/creditos/paquetes" element={<ComprarPaquetes />} />
            <Route path="/perfil/intercambios" element={<IntercambiosPage />} />
-           {/* 🔥 NUEVOS REPORTES */}
 
           {/* Dashboard admin con todos los indicadores */}
           <Route path="/admin/reportes" element={<AdminReportsPage />} />
 
           {/* Dashboard de usuario (sus métricas e historial) */}
-          <Route path="/mi-cuenta/reportes" element={<UserReportsPage />} />
+          <Route path="/perfil/reportes" element={<UserReportsPage />} />
 
           {/* Dashboard de emprendedor / ONG */}
           <Route path="/org/reportes" element={<OrgReportsPage />} />

@@ -91,7 +91,7 @@ export default function Profile() {
               Configuración
             </Link>
             <Link
-              to="/reports"  // usa /reports (y también mapeamos /reportes en rutas)
+              to="/perfil/reportes"  // usa /reports (y también mapeamos /reportes en rutas)
               className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-2 text-sm font-semibold text-white"
             >
               Ver reportes
