@@ -10,6 +10,7 @@ import type {
   AdminDashboard,
   RankingTopUsuario,
   UsuarioActivoPorRolRow, 
+    UserLastActivityRow,   
 } from "../types/report";
 
 // 🔐 Igual que en creditos.ts, pero local a este módulo
@@ -153,6 +154,22 @@ export async function getAdminTopUsuarios(): Promise<RankingTopUsuario[]> {
 export async function getAdminUsuariosActivosPorRol(): Promise<UsuarioActivoPorRolRow[]> {
   const r = await api.get<{ ok: boolean; data: UsuarioActivoPorRolRow[] }>(
     "/api/report/admin/usuarios-activos-por-rol"
+  );
+  return (r as any).data ?? (r as any);
+}
+
+// GET /api/report/admin/users/last-activity
+export async function getAdminUserLastActivityAll(): Promise<UserLastActivityRow[]> {
+  const r = await api.get<{ ok: boolean; data: UserLastActivityRow[] }>(
+    "/api/report/admin/users/last-activity"
+  );
+  return (r as any).data ?? (r as any);
+}
+
+// GET /api/report/admin/users/inactivos-30d
+export async function getAdminUsuariosInactivos30d(): Promise<UserLastActivityRow[]> {
+  const r = await api.get<{ ok: boolean; data: UserLastActivityRow[] }>(
+    "/api/report/admin/users/inactivos-30d"
   );
   return (r as any).data ?? (r as any);
 }

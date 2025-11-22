@@ -168,10 +168,17 @@ export async function createPublication(input: CreatePublicationInput) {
       await client.query(MarketSQL.insertFoto, [pubId, url, i, i === 0]);
     }
 
-    // NOTA: aquí podrías usar factor_ids y sin_impacto para actualizar
-    // campos agregados o para lógica de reportes. No creamos nuevas tablas,
-    // solo dejamos registrados los ids que vinieron en el input si quieres
-    // usarlos para logs/metadata más adelante.
+    // 🔹 ACUMULAR IMPACTO ECOLÓGICO
+    const pesoReal = peso_aprox_kg ?? 0;
+
+    if (!sin_impacto && pesoReal > 0) {
+      await client.query(MarketSQL.acumularImpactoPublicacion, [
+        usuario_id,      // $1: usuario_id
+        categoria_id,    // $2: categoria_id
+        pesoReal,        // $3: peso_aprox_kg
+        factor_ids,      // $4: int[]
+      ]);
+    }
 
     return { id: pubId };
   });

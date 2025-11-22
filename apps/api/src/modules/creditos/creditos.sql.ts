@@ -71,4 +71,16 @@ export const CreditosSQL = {
     WHERE id = $2
     RETURNING saldo_disponible;
   `,
+
+    getResumenCompras: `
+    SELECT 
+      COALESCE(SUM(p.precio), 0)        AS monto_total,
+      COALESCE(SUM(p.cant_creditos), 0) AS creditos_obtenidos,
+      COUNT(*)                          AS total_compras
+    FROM compras_creditos c
+    JOIN paquetes_creditos p ON p.id = c.paquete_id
+    WHERE c.usuario_id = $1
+      AND c.estado_pago = 'completado';
+  `,
+
 };

@@ -18,4 +18,9 @@ r.get("/report/admin/overview", C.adminOverview);
 r.get("/report/admin/top-categorias", C.adminTopCategorias);
 r.get("/report/admin/top-usuarios", C.adminTopUsuarios);
 r.get("/report/admin/usuarios-activos-por-rol", C.adminUsuariosActivosPorRol);
+// 🔥 NUEVAS RUTAS ADMIN PARA ACTIVOS / INACTIVOS
+r.get("/report/admin/users/last-activity", C.adminUserLastActivityAll);
+r.get("/report/admin/users/inactivos-30d", C.adminUsuariosInactivos30d);
+
+
 export default r;

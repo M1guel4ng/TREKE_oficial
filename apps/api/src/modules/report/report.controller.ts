@@ -183,3 +183,28 @@ export const adminUsuariosActivosPorRol = async (_: Request, res: Response) => {
     res.status(400).json({ ok: false, error: e.message });
   }
 };
+/**
+ * ADMIN – Última actividad de todos los usuarios
+ * Usa S.getUserLastActivityAll() → vw_user_last_activity
+ */
+export const adminUserLastActivityAll = async (_: Request, res: Response) => {
+  try {
+    const data = await S.getUserLastActivityAll();
+    res.json({ ok: true, data });
+  } catch (e: any) {
+    res.status(400).json({ ok: false, error: e.message });
+  }
+};
+
+/**
+ * ADMIN – Usuarios inactivos > 30 días
+ * Usa S.getUsuariosInactivos30d() → vw_usuario_inactivos_30d
+ */
+export const adminUsuariosInactivos30d = async (_: Request, res: Response) => {
+  try {
+    const data = await S.getUsuariosInactivos30d();
+    res.json({ ok: true, data });
+  } catch (e: any) {
+    res.status(400).json({ ok: false, error: e.message });
+  }
+};

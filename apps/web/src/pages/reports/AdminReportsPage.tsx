@@ -6,6 +6,8 @@ import {
   getAdminTopCategorias,
   getAdminTopUsuarios,
   getAdminUsuariosActivosPorRol,
+  getAdminUserLastActivityAll,
+  getAdminUsuariosInactivos30d,
 } from "../../api/report";
 import type {
   AdminDashboard,
@@ -14,6 +16,7 @@ import type {
   ConsumoVsGeneracion,
   MonetizacionIngresosMes,
   UsuarioActivoPorRolRow,
+  UserLastActivityRow,
 } from "../../types/report";
 
 import KPICard from "../../components/Reportes/KPICard";
@@ -31,6 +34,8 @@ export default function AdminReportsPage() {
   const [topCategorias, setTopCategorias] = useState<IntercambiosPorCategoria[]>([]);
   const [topUsuarios, setTopUsuarios] = useState<RankingTopUsuario[]>([]);
   const [usuariosActivos, setUsuariosActivos] = useState<UsuarioActivoPorRolRow[]>([]);
+  const [userLastActivity, setUserLastActivity] = useState<UserLastActivityRow[]>([]);
+  const [usuariosInactivos, setUsuariosInactivos] = useState<UserLastActivityRow[]>([]);
   const [status, setStatus] = useState<Status>("idle");
   const [msg, setMsg] = useState<string>("");
 
@@ -40,17 +45,28 @@ export default function AdminReportsPage() {
         setStatus("loading");
         setMsg("");
 
-        const [ov, cats, users, activos] = await Promise.all([
+        const [
+          ov,
+          cats,
+          users,
+          activos,
+          lastActivity,
+          inactivos,
+        ] = await Promise.all([
           getAdminOverview(),
           getAdminTopCategorias(),
           getAdminTopUsuarios(),
           getAdminUsuariosActivosPorRol(),
+          getAdminUserLastActivityAll(),
+          getAdminUsuariosInactivos30d(),
         ]);
 
         setOverview(ov);
         setTopCategorias(cats || []);
         setTopUsuarios(users || []);
         setUsuariosActivos(activos || []);
+        setUserLastActivity(lastActivity || []);
+        setUsuariosInactivos(inactivos || []);
         setStatus("success");
       } catch (e: any) {
         console.error(e);
@@ -139,9 +155,7 @@ export default function AdminReportsPage() {
 
             {/* Monetización: tabla + gráfico */}
             <section className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-              <SubTablaIngresosPorMes
-                rows={overview.ingresos_por_mes || []}
-              />
+              <SubTablaIngresosPorMes rows={overview.ingresos_por_mes || []} />
               <ChartContainer title="Ingresos por mes (Bs)">
                 {ingresosMesChart.length > 0 ? (
                   <BarChartSimple data={ingresosMesChart} />
@@ -342,6 +356,90 @@ export default function AdminReportsPage() {
                   </table>
                 </div>
               )}
+            </SectionCard>
+
+            {/* Última actividad de usuarios */}
+            <SectionCard title="Última actividad de usuarios">
+              {userLastActivity.length === 0 ? (
+                <p className="text-sm text-neutral-400">
+                  No hay registros de actividad de usuarios.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left text-xs">
+                    <thead className="border-b border-neutral-800 text-neutral-400">
+                      <tr>
+                        <th className="py-2 px-3">ID</th>
+                        <th className="py-2 px-3">Email</th>
+                        <th className="py-2 px-3">Última actividad</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {userLastActivity.map((row) => (
+                        <tr
+                          key={row.usuario_id}
+                          className="border-b border-neutral-900/80 last:border-0"
+                        >
+                          <td className="py-2 px-3 text-xs">
+                            #{row.usuario_id}
+                          </td>
+                          <td className="py-2 px-3">{row.email}</td>
+                          <td className="py-2 px-3 text-xs">
+                            {row.ultima_actividad
+                              ? new Date(row.ultima_actividad).toLocaleString()
+                              : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <p className="mt-2 text-[11px] text-neutral-400">
+                Datos provenientes de la vista <code>vw_user_last_activity</code>.
+              </p>
+            </SectionCard>
+
+            {/* Usuarios inactivos (> 30 días sin actividad) */}
+            <SectionCard title="Usuarios inactivos (&gt; 30 días sin actividad)">
+              {usuariosInactivos.length === 0 ? (
+                <p className="text-sm text-neutral-400">
+                  No hay usuarios con más de 30 días sin actividad.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left text-xs">
+                    <thead className="border-b border-neutral-800 text-neutral-400">
+                      <tr>
+                        <th className="py-2 px-3">ID</th>
+                        <th className="py-2 px-3">Email</th>
+                        <th className="py-2 px-3">Última actividad</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {usuariosInactivos.map((row) => (
+                        <tr
+                          key={row.usuario_id}
+                          className="border-b border-neutral-900/80 last:border-0"
+                        >
+                          <td className="py-2 px-3 text-xs">
+                            #{row.usuario_id}
+                          </td>
+                          <td className="py-2 px-3">{row.email}</td>
+                          <td className="py-2 px-3 text-xs">
+                            {row.ultima_actividad
+                              ? new Date(row.ultima_actividad).toLocaleString()
+                              : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <p className="mt-2 text-[11px] text-neutral-400">
+                Basado en la vista <code>vw_usuario_inactivos_30d</code>.
+              </p>
             </SectionCard>
           </>
         )}

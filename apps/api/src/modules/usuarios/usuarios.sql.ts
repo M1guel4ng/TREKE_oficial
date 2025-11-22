@@ -47,7 +47,6 @@ export const SQL = {
   // --- Login mínimo (pruebas) ---
   loginPlano: `SELECT id, email, rol_id, estado FROM usuario WHERE email=$1 AND password=$2 AND deleted_at IS NULL;`,
 
-  
   // --- Perfil ---
   getPerfilFull: `
     SELECT u.id, u.email, u.rol_id, u.estado, u.created_at,
@@ -67,7 +66,6 @@ export const SQL = {
     LEFT JOIN reputacion_user r ON r.usuario_id = u.id
     WHERE u.id = $1;
   `,
-
 
   updatePerfil: `
     UPDATE perfil_usuario
@@ -120,37 +118,44 @@ export const SQL = {
   `,
 
   // ---- Métricas rápidas
-  panelMetricas: `
-    SELECT 
-      -- Publicaciones activas del usuario
-      (SELECT COUNT(*)
-       FROM publicaciones
-       WHERE usuario_id = $1
-         AND deleted_at IS NULL
-      ) AS publicaciones_activas,
+   panelMetricas: `
+  SELECT 
+    -- Publicaciones activas del usuario
+    (SELECT COUNT(*)
+     FROM publicaciones
+     WHERE usuario_id = $1
+       AND deleted_at IS NULL
+    ) AS publicaciones_activas,
 
-      -- Intercambios donde participó (como comprador o vendedor)
-      (SELECT COUNT(*)
-       FROM intercambios
-       WHERE (comprador_id = $1 OR vendedor_id = $1)
-         AND estado IN ('completado','activo')
-      ) AS intercambios_totales,
+    -- SOLO intercambios COMPLETADOS donde participó (como comprador o vendedor)
+    (SELECT COUNT(*)
+     FROM intercambios
+     WHERE (comprador_id = $1 OR vendedor_id = $1)
+       AND estado = 'completado'
+    ) AS intercambios_totales,
 
-      -- Créditos comprados por el usuario (sumando los cant_creditos del paquete)
-      (SELECT COALESCE(SUM(p.cant_creditos), 0)
-       FROM compras_creditos c
-       JOIN paquetes_creditos p ON p.id = c.paquete_id
-       WHERE c.usuario_id = $1
-         AND c.estado_pago = 'completado'
-      ) AS total_creditos_comprados;
-  `,
+    -- Créditos comprados por el usuario (tomados del paquete comprado)
+    (SELECT COALESCE(SUM(p.cant_creditos), 0)
+     FROM compras_creditos c
+     JOIN paquetes_creditos p ON p.id = c.paquete_id
+     WHERE c.usuario_id = $1
+       AND c.estado_pago = 'completado'
+    ) AS total_creditos_comprados;
+`,
+
+
 
   // ---- Impacto (si existe)
   panelImpacto: `
-    SELECT *
-    FROM impacto_usuario
-    WHERE usuario_id = $1
-  `,
+  SELECT
+    total_co2_evitado,
+    total_energia_ahorrada,
+    total_agua_preservada,
+    total_residuos_evitados,
+    total_creditos_ganados
+  FROM impacto_usuario
+  WHERE usuario_id = $1;
+`,
 
   // ---- Publicaciones con foto principal (paginado)
   panelPublicaciones: `
@@ -186,52 +191,5 @@ export const SQL = {
     ORDER BY m.fecha_movimiento DESC, m.id DESC
     LIMIT $2 OFFSET $3
   `,
-    // --- Aliases para compatibilidad con el servicio (/perfil) ---
-  getPanelPerfil: `
-    SELECT
-      u.id, u.email, u.estado, u.rol_id, r.nombre AS rol_nombre,
-      u.ultimo_login, u.created_at,
-      p.full_name, p.acerca_de, p.foto,
-      b.id AS billetera_id, b.saldo_disponible, b.saldo_retenido
-    FROM usuario u
-    LEFT JOIN rol r            ON r.id = u.rol_id
-    LEFT JOIN perfil_usuario p ON p.usuario_id = u.id
-    LEFT JOIN billetera b      ON b.usuario_id = u.id
-    WHERE u.id = $1
-  `,
-
-  getPanelPublicaciones: `
-    SELECT
-      pub.id, pub.titulo, pub.descripcion, pub.valor_creditos,
-      pub.created_at,
-      c.nombre  AS categoria,
-      e.nombre  AS estado_nombre,
-      (
-        SELECT f.foto_url
-        FROM fotos f
-        WHERE f.publicacion_id = pub.id
-        ORDER BY f.es_principal DESC, f.orden ASC, f.id ASC
-        LIMIT 1
-      ) AS foto_principal
-    FROM publicaciones pub
-    JOIN categoria c          ON c.id = pub.categoria_id
-    JOIN estado_publicacion e ON e.id = pub.estado_id
-    WHERE pub.usuario_id = $1 AND pub.deleted_at IS NULL
-    ORDER BY pub.created_at DESC
-    LIMIT $2 OFFSET $3
-  `,
-
-  getPanelMovimientos: `
-    SELECT
-      m.id, m.fecha_movimiento, m.monto, m.saldo_anterior, m.saldo_posterior,
-      m.descripcion, m.tipo_referencia, m.referencia_id,
-      tm.codigo AS tipo_codigo, tm.descripcion AS tipo_descripcion, tm.es_debito
-    FROM movimientos m
-    JOIN tipos_movimiento tm ON tm.id = m.tipo_mov_id
-    WHERE m.billetera_user_id = $1
-    ORDER BY m.fecha_movimiento DESC, m.id DESC
-    LIMIT $2 OFFSET $3
-  `,
 };
-
 

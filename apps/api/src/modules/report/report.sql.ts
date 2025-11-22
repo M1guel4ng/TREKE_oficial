@@ -1,8 +1,5 @@
 // apps/api/src/modules/report/report.sql.ts
 
-// Centraliza TODOS los SELECTs sobre vistas de analítica
-// para que el service no tenga SQL "crudo" y siempre use
-// las views ya definidas en la base de datos.
 
 export const ReportSQL = {
   // =====================================================

@@ -130,7 +130,7 @@ export const MarketSQL = {
   `,
 
   // Creación de publicación básica
-  createPublication: `
+   createPublication: `
     INSERT INTO publicaciones (
       titulo,
       descripcion,
@@ -143,9 +143,23 @@ export const MarketSQL = {
       categoria_id,
       estado_id
     )
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+    VALUES (
+      $1,                  -- titulo
+      $2,                  -- descripcion
+      $3,                  -- valor_creditos
+      $4,                  -- ubicacion_texto
+      $5,                  -- latitud
+      $6,                  -- longitud
+      $7,                  -- peso_aprox_kg
+      $8::integer,         -- usuario_id
+      $9::integer,         -- categoria_id
+      $10::integer         -- estado_id
+    )
     RETURNING id;
   `,
+
+
+
 
   // Inserción de fotos asociadas
   insertFoto: `
@@ -160,6 +174,65 @@ export const MarketSQL = {
     WHERE nombre = $1
     LIMIT 1;
   `,
+
+  // Acumular impacto ecológico al crear una publicación
+    acumularImpactoPublicacion: `
+    INSERT INTO impacto_usuario (
+      usuario_id,
+      total_co2_evitado,
+      total_energia_ahorrada,
+      total_agua_preservada,
+      total_residuos_evitados,
+      total_creditos_ganados,
+      updated_at
+    )
+    SELECT
+      $1::integer AS usuario_id,
+      SUM(
+        CASE WHEN f.nombre_factor = 'CO2 evitado'
+             THEN ec.valor_por_kg * $3::numeric
+             ELSE 0
+        END
+      ) AS total_co2_evitado,
+      SUM(
+        CASE WHEN f.nombre_factor = 'Energía ahorrada'
+             THEN ec.valor_por_kg * $3::numeric
+             ELSE 0
+        END
+      ) AS total_energia_ahorrada,
+      SUM(
+        CASE WHEN f.nombre_factor = 'Agua preservada'
+             THEN ec.valor_por_kg * $3::numeric
+             ELSE 0
+        END
+      ) AS total_agua_preservada,
+      SUM(
+        CASE WHEN f.nombre_factor = 'Residuos evitados'
+             THEN ec.valor_por_kg * $3::numeric
+             ELSE 0
+        END
+      ) AS total_residuos_evitados,
+      0 AS total_creditos_ganados,
+      now() AS updated_at
+    FROM equivalencias_categoria ec
+    JOIN factores_ecologicos f ON f.id = ec.factor_id
+    WHERE ec.categoria_id = $2::integer
+      AND (
+        $4::int[] IS NULL
+        OR cardinality($4::int[]) = 0
+        OR ec.factor_id = ANY($4::int[])
+      )
+    GROUP BY usuario_id
+    ON CONFLICT (usuario_id) DO UPDATE
+    SET
+      total_co2_evitado       = impacto_usuario.total_co2_evitado       + EXCLUDED.total_co2_evitado,
+      total_energia_ahorrada  = impacto_usuario.total_energia_ahorrada  + EXCLUDED.total_energia_ahorrada,
+      total_agua_preservada   = impacto_usuario.total_agua_preservada   + EXCLUDED.total_agua_preservada,
+      total_residuos_evitados = impacto_usuario.total_residuos_evitados + EXCLUDED.total_residuos_evitados,
+      total_creditos_ganados  = impacto_usuario.total_creditos_ganados  + EXCLUDED.total_creditos_ganados,
+      updated_at              = now();
+  `,
+
 
 };
 

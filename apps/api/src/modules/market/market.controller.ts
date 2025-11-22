@@ -214,6 +214,4 @@ export const MarketController = {
       res.status(400).json({ ok: false, error: e.message });
     }
   },
-
-
 };
