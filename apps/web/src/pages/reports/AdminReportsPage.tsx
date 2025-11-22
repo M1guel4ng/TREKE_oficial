@@ -1,10 +1,11 @@
 // apps/web/src/pages/admin/AdminReportsPage.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Header from "../../components/Header";
 import {
   getAdminOverview,
   getAdminTopCategorias,
   getAdminTopUsuarios,
+  getAdminUsuariosActivosPorRol,
 } from "../../api/report";
 import type {
   AdminDashboard,
@@ -12,7 +13,16 @@ import type {
   RankingTopUsuario,
   ConsumoVsGeneracion,
   MonetizacionIngresosMes,
+  UsuarioActivoPorRolRow,
 } from "../../types/report";
+
+import KPICard from "../../components/Reportes/KPICard";
+import ChartContainer from "../../components/Reportes/ChartContainer";
+import SectionCard from "../../components/Reportes/SectionCard";
+import BarChartSimple, {
+  type SimpleChartDatum,
+} from "../../components/Reportes/Graficas/BarChartSimple";
+import PieChartSimple from "../../components/Reportes/Graficas/PieChartSimple";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -20,6 +30,7 @@ export default function AdminReportsPage() {
   const [overview, setOverview] = useState<AdminDashboard | null>(null);
   const [topCategorias, setTopCategorias] = useState<IntercambiosPorCategoria[]>([]);
   const [topUsuarios, setTopUsuarios] = useState<RankingTopUsuario[]>([]);
+  const [usuariosActivos, setUsuariosActivos] = useState<UsuarioActivoPorRolRow[]>([]);
   const [status, setStatus] = useState<Status>("idle");
   const [msg, setMsg] = useState<string>("");
 
@@ -29,15 +40,17 @@ export default function AdminReportsPage() {
         setStatus("loading");
         setMsg("");
 
-        const [ov, cats, users] = await Promise.all([
+        const [ov, cats, users, activos] = await Promise.all([
           getAdminOverview(),
           getAdminTopCategorias(),
           getAdminTopUsuarios(),
+          getAdminUsuariosActivosPorRol(),
         ]);
 
         setOverview(ov);
         setTopCategorias(cats || []);
         setTopUsuarios(users || []);
+        setUsuariosActivos(activos || []);
         setStatus("success");
       } catch (e: any) {
         console.error(e);
@@ -46,6 +59,43 @@ export default function AdminReportsPage() {
       }
     })();
   }, []);
+
+  // === DATA PARA GRÁFICOS ===
+  const ingresosMesChart: SimpleChartDatum[] = useMemo(
+    () =>
+      (overview?.ingresos_por_mes || []).map((row) => ({
+        name: row.periodo,
+        value: Number(row.bs_total ?? 0),
+      })),
+    [overview]
+  );
+
+  const consumoChart: SimpleChartDatum[] = useMemo(
+    () =>
+      (overview?.consumo_vs_generacion || []).map((row) => ({
+        name: row.origen,
+        value: Number(row.total ?? 0),
+      })),
+    [overview]
+  );
+
+  const categoriasChart: SimpleChartDatum[] = useMemo(
+    () =>
+      topCategorias.map((c) => ({
+        name: c.categoria,
+        value: Number(c.intercambios ?? 0),
+      })),
+    [topCategorias]
+  );
+
+  const topUsuariosChart: SimpleChartDatum[] = useMemo(
+    () =>
+      topUsuarios.map((u) => ({
+        name: u.nombre,
+        value: Number(u.intercambios_hechos ?? 0),
+      })),
+    [topUsuarios]
+  );
 
   return (
     <div className="min-h-dvh bg-neutral-950 text-neutral-100">
@@ -60,226 +110,231 @@ export default function AdminReportsPage() {
 
         {status === "success" && overview && (
           <>
-            {/* Sección Monetización - tarjetas resumen */}
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold">Monetización</h2>
-              <div className="grid gap-4 md:grid-cols-3">
-                {/* Ingresos totales */}
-                <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
-                  <h3 className="text-xs font-semibold text-neutral-300">
-                    Ingresos totales por créditos
-                  </h3>
-                  {overview.ingresos_total ? (
-                    <div className="mt-2 space-y-1 text-sm text-neutral-300">
-                      <p>
-                        <span className="font-semibold">Compras OK:</span>{" "}
-                        {overview.ingresos_total.compras_ok}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Créditos vendidos:</span>{" "}
-                        {overview.ingresos_total.creditos_total}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Ingresos (Bs):</span>{" "}
-                        {overview.ingresos_total.bs_total}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="mt-2 text-sm text-neutral-400">
-                      Sin registros de monetización todavía.
-                    </p>
-                  )}
-                </div>
+            {/* KPIs globales */}
+            <section className="grid gap-4 md:grid-cols-3">
+              <KPICard
+                label="Ingresos totales (Bs) por venta de créditos"
+                value={overview.ingresos_total?.bs_total ?? "0.00"}
+                helperText={`Compras OK: ${
+                  overview.ingresos_total?.compras_ok ?? 0
+                } · Créditos vendidos: ${
+                  overview.ingresos_total?.creditos_total ?? 0
+                }`}
+              />
+              <KPICard
+                label="Intercambios totales"
+                value={overview.total_intercambios?.total ?? 0}
+                helperText={`Completados: ${
+                  overview.total_intercambios?.completados ?? 0
+                } · Activos: ${overview.total_intercambios?.activos ?? 0}`}
+              />
+              <KPICard
+                label="Suscripciones premium"
+                value={overview.adopcion_suscripcion?.activas ?? 0}
+                helperText={`Usuarios con suscripción: ${
+                  overview.adopcion_suscripcion?.usuarios_con_suscripcion ?? 0
+                }`}
+              />
+            </section>
 
-                {/* Adopción de suscripción */}
-                <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
-                  <h3 className="text-xs font-semibold text-neutral-300">
-                    Adopción de suscripción premium
-                  </h3>
-                  {overview.adopcion_suscripcion ? (
-                    <div className="mt-2 space-y-1 text-sm text-neutral-300">
-                      <p>
-                        <span className="font-semibold">Registros:</span>{" "}
-                        {overview.adopcion_suscripcion.total_registros}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Activas:</span>{" "}
-                        {overview.adopcion_suscripcion.activas}
-                      </p>
-                      <p>
-                        <span className="font-semibold">
-                          Usuarios con suscripción:
-                        </span>{" "}
-                        {
-                          overview.adopcion_suscripcion
-                            .usuarios_con_suscripcion
-                        }
-                      </p>
-                      <p>
-                        <span className="font-semibold">Ratio activas:</span>{" "}
-                        {overview.adopcion_suscripcion.ratio_activas != null
-                          ? Number(
-                              overview.adopcion_suscripcion.ratio_activas
-                            ).toFixed(2)
-                          : "N/D"}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="mt-2 text-sm text-neutral-400">
-                      No hay datos de suscripciones.
-                    </p>
-                  )}
-                </div>
-
-                {/* Intercambios */}
-                <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
-                  <h3 className="text-xs font-semibold text-neutral-300">
-                    Estado de los intercambios
-                  </h3>
-                  {overview.total_intercambios ? (
-                    <div className="mt-2 space-y-1 text-sm text-neutral-300">
-                      <p>
-                        <span className="font-semibold">
-                          Completados:
-                        </span>{" "}
-                        {overview.total_intercambios.completados}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Activos:</span>{" "}
-                        {overview.total_intercambios.activos}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Total:</span>{" "}
-                        {overview.total_intercambios.total}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="mt-2 text-sm text-neutral-400">
-                      No hay intercambios registrados.
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Ingresos por mes */}
+            {/* Monetización: tabla + gráfico */}
+            <section className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
               <SubTablaIngresosPorMes
                 rows={overview.ingresos_por_mes || []}
               />
+              <ChartContainer title="Ingresos por mes (Bs)">
+                {ingresosMesChart.length > 0 ? (
+                  <BarChartSimple data={ingresosMesChart} />
+                ) : (
+                  <p className="text-xs text-neutral-500">
+                    No hay datos para mostrar.
+                  </p>
+                )}
+              </ChartContainer>
+            </section>
 
-              {/* Consumo vs generación */}
+            {/* Consumo vs generación: tabla + gráfico */}
+            <section className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
               <SubTablaConsumoVsGeneracion
                 rows={overview.consumo_vs_generacion || []}
               />
+              <ChartContainer title="Consumo vs generación de créditos">
+                {consumoChart.length > 0 ? (
+                  <PieChartSimple data={consumoChart} />
+                ) : (
+                  <p className="text-xs text-neutral-500">
+                    No hay datos para mostrar.
+                  </p>
+                )}
+              </ChartContainer>
             </section>
 
             {/* Impacto ambiental */}
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold">Impacto ambiental</h2>
-              <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
-                {overview.impacto_total ? (
-                  <ul className="space-y-1 text-sm text-neutral-300">
-                    <li>
-                      <span className="font-semibold">CO₂ evitado:</span>{" "}
-                      {overview.impacto_total.co2} kg
-                    </li>
-                    <li>
-                      <span className="font-semibold">Energía ahorrada:</span>{" "}
-                      {overview.impacto_total.energia} kWh
-                    </li>
-                    <li>
-                      <span className="font-semibold">Agua preservada:</span>{" "}
-                      {overview.impacto_total.agua} L
-                    </li>
-                    <li>
-                      <span className="font-semibold">Residuos evitados:</span>{" "}
-                      {overview.impacto_total.residuos} kg
-                    </li>
-                    <li>
-                      <span className="font-semibold">
-                        Créditos otorgados:
-                      </span>{" "}
-                      {overview.impacto_total.creditos}
-                    </li>
-                  </ul>
-                ) : (
+            <SectionCard title="Impacto ambiental acumulado">
+              {overview.impacto_total ? (
+                <ul className="space-y-1 text-sm text-neutral-300">
+                  <li>
+                    <span className="font-semibold">CO₂ evitado:</span>{" "}
+                    {overview.impacto_total.co2} kg
+                  </li>
+                  <li>
+                    <span className="font-semibold">Energía ahorrada:</span>{" "}
+                    {overview.impacto_total.energia} kWh
+                  </li>
+                  <li>
+                    <span className="font-semibold">Agua preservada:</span>{" "}
+                    {overview.impacto_total.agua} L
+                  </li>
+                  <li>
+                    <span className="font-semibold">Residuos evitados:</span>{" "}
+                    {overview.impacto_total.residuos} kg
+                  </li>
+                  <li>
+                    <span className="font-semibold">
+                      Créditos ecológicos otorgados:
+                    </span>{" "}
+                    {overview.impacto_total.creditos}
+                  </li>
+                </ul>
+              ) : (
+                <p className="text-sm text-neutral-400">
+                  Aún no se ha calculado el impacto ambiental.
+                </p>
+              )}
+            </SectionCard>
+
+            {/* Categorías + gráfico */}
+            <section className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+              <section className="space-y-3">
+                <h2 className="text-sm font-semibold">
+                  Categorías con más intercambios
+                </h2>
+                {topCategorias.length === 0 ? (
                   <p className="text-sm text-neutral-400">
-                    Aún no se ha calculado el impacto ambiental.
+                    No hay datos suficientes de categorías.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/60">
+                    <table className="min-w-full text-left text-xs">
+                      <thead className="border-b border-neutral-800 text-neutral-400">
+                        <tr>
+                          <th className="py-2 px-3">Categoría</th>
+                          <th className="py-2 px-3 text-right">
+                            Total intercambios
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {topCategorias.map((c) => (
+                          <tr
+                            key={c.categoria_id}
+                            className="border-b border-neutral-900/80 last:border-0"
+                          >
+                            <td className="py-2 px-3">{c.categoria}</td>
+                            <td className="py-2 px-3 text-right">
+                              {c.intercambios}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+
+              <ChartContainer title="Distribución por categoría">
+                {categoriasChart.length > 0 ? (
+                  <PieChartSimple data={categoriasChart} />
+                ) : (
+                  <p className="text-xs text-neutral-500">
+                    No hay datos para mostrar.
                   </p>
                 )}
-              </div>
+              </ChartContainer>
             </section>
 
-            {/* Categorías */}
-            <section className="space-y-3">
-              <h2 className="text-sm font-semibold">
-                Categorías con más intercambios
-              </h2>
-              {topCategorias.length === 0 ? (
-                <p className="text-sm text-neutral-400">
-                  No hay datos suficientes de categorías.
-                </p>
-              ) : (
-                <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/60">
-                  <table className="min-w-full text-left text-xs">
-                    <thead className="border-b border-neutral-800 text-neutral-400">
-                      <tr>
-                        <th className="py-2 px-3">Categoría</th>
-                        <th className="py-2 px-3 text-right">
-                          Total intercambios
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {topCategorias.map((c) => (
-                        <tr
-                          key={c.categoria_id}
-                          className="border-b border-neutral-900/80 last:border-0"
-                        >
-                          <td className="py-2 px-3">{c.categoria}</td>
-                          <td className="py-2 px-3 text-right">
-                            {c.intercambios}
-                          </td>
+            {/* Top usuarios + gráfico */}
+            <section className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] pb-6">
+              <section className="space-y-3">
+                <h2 className="text-sm font-semibold">
+                  Top usuarios por intercambios
+                </h2>
+                {topUsuarios.length === 0 ? (
+                  <p className="text-sm text-neutral-400">
+                    No hay datos del ranking global de usuarios.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/60">
+                    <table className="min-w-full text-left text-xs">
+                      <thead className="border-b border-neutral-800 text-neutral-400">
+                        <tr>
+                          <th className="py-2 px-3">#</th>
+                          <th className="py-2 px-3">Usuario</th>
+                          <th className="py-2 px-3 text-right">
+                            Intercambios completados
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      </thead>
+                      <tbody>
+                        {topUsuarios.map((u) => (
+                          <tr
+                            key={u.usuario_id}
+                            className="border-b border-neutral-900/80 last:border-0"
+                          >
+                            <td className="py-2 px-3 text-xs">
+                              #{u.rank_intercambios}
+                            </td>
+                            <td className="py-2 px-3">{u.nombre}</td>
+                            <td className="py-2 px-3 text-right">
+                              {u.intercambios_hechos}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+
+              <ChartContainer title="Top 10 por intercambios">
+                {topUsuariosChart.length > 0 ? (
+                  <BarChartSimple data={topUsuariosChart} />
+                ) : (
+                  <p className="text-xs text-neutral-500">
+                    No hay datos para mostrar.
+                  </p>
+                )}
+              </ChartContainer>
             </section>
 
-            {/* Top usuarios */}
-            <section className="space-y-3 pb-6">
-              <h2 className="text-sm font-semibold">
-                Top usuarios por intercambios
-              </h2>
-              {topUsuarios.length === 0 ? (
+            {/* Usuarios activos por rol */}
+            <SectionCard title="Usuarios activos por rol">
+              {usuariosActivos.length === 0 ? (
                 <p className="text-sm text-neutral-400">
-                  No hay datos del ranking global de usuarios.
+                  No hay registros recientes de actividad de usuarios.
                 </p>
               ) : (
-                <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/60">
+                <div className="overflow-x-auto">
                   <table className="min-w-full text-left text-xs">
                     <thead className="border-b border-neutral-800 text-neutral-400">
                       <tr>
-                        <th className="py-2 px-3">#</th>
-                        <th className="py-2 px-3">Usuario</th>
-                        <th className="py-2 px-3 text-right">
-                          Intercambios completados
-                        </th>
+                        <th className="py-2 px-3">ID</th>
+                        <th className="py-2 px-3">Rol</th>
+                        <th className="py-2 px-3">Email</th>
+                        <th className="py-2 px-3">Última actividad</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {topUsuarios.map((u) => (
+                      {usuariosActivos.map((u) => (
                         <tr
                           key={u.usuario_id}
                           className="border-b border-neutral-900/80 last:border-0"
                         >
+                          <td className="py-2 px-3 text-xs">#{u.usuario_id}</td>
+                          <td className="py-2 px-3">{u.rol}</td>
+                          <td className="py-2 px-3">{u.email}</td>
                           <td className="py-2 px-3 text-xs">
-                            #{u.rank_intercambios}
-                          </td>
-                          <td className="py-2 px-3">{u.nombre}</td>
-                          <td className="py-2 px-3 text-right">
-                            {u.intercambios_hechos}
+                            {new Date(u.ultima_actividad).toLocaleString()}
                           </td>
                         </tr>
                       ))}
@@ -287,7 +342,7 @@ export default function AdminReportsPage() {
                   </table>
                 </div>
               )}
-            </section>
+            </SectionCard>
           </>
         )}
       </main>
@@ -300,7 +355,7 @@ function SubTablaIngresosPorMes({ rows }: { rows: MonetizacionIngresosMes[] }) {
   return (
     <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
       <h3 className="text-xs font-semibold text-neutral-300">
-        Ingresos por mes
+        Ingresos por mes (detalle)
       </h3>
       <div className="mt-2 overflow-x-auto">
         <table className="min-w-full text-left text-xs">
@@ -342,7 +397,7 @@ function SubTablaConsumoVsGeneracion({
   return (
     <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
       <h3 className="text-xs font-semibold text-neutral-300">
-        Consumo de créditos vs generación
+        Consumo de créditos vs generación (detalle)
       </h3>
       <div className="mt-2 overflow-x-auto">
         <table className="min-w-full text-left text-xs">

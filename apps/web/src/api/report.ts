@@ -9,6 +9,7 @@ import type {
   IntercambiosPorCategoria,
   AdminDashboard,
   RankingTopUsuario,
+  UsuarioActivoPorRolRow, 
 } from "../types/report";
 
 // 🔐 Igual que en creditos.ts, pero local a este módulo
@@ -145,6 +146,13 @@ export async function getAdminTopCategorias(): Promise<IntercambiosPorCategoria[
 export async function getAdminTopUsuarios(): Promise<RankingTopUsuario[]> {
   const r = await api.get<{ ok: boolean; data: RankingTopUsuario[] }>(
     "/api/report/admin/top-usuarios"
+  );
+  return (r as any).data ?? (r as any);
+}
+// GET /api/report/admin/usuarios-activos-por-rol
+export async function getAdminUsuariosActivosPorRol(): Promise<UsuarioActivoPorRolRow[]> {
+  const r = await api.get<{ ok: boolean; data: UsuarioActivoPorRolRow[] }>(
+    "/api/report/admin/usuarios-activos-por-rol"
   );
   return (r as any).data ?? (r as any);
 }

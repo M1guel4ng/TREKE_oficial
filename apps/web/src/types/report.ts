@@ -138,3 +138,9 @@ export interface AdminDashboard {
   total_intercambios: TotalIntercambios | null;
   consumo_vs_generacion: ConsumoVsGeneracion[];
 }
+export interface UsuarioActivoPorRolRow {
+  usuario_id: number;
+  email: string;
+  rol: string;
+  ultima_actividad: string; // ISO
+}
