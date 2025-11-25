@@ -30,7 +30,8 @@ export const CreditosSQL = {
   tipoMovimientoPorCodigo: `
     SELECT id
     FROM tipos_movimiento
-    WHERE codigo = $1;
+    WHERE codigo = $1
+      AND es_activo = true;
   `,
 
   crearTipoMovimiento: `
@@ -40,28 +41,25 @@ export const CreditosSQL = {
   `,
 
   crearCompraCreditos: `
-  INSERT INTO compras_creditos(
-      usuario_id,
-      paquete_id,
-      id_transaccion,
-      estado_pago
-  )
-  VALUES ($1, $2, $3, $4)
-  RETURNING id
-`,
+    INSERT INTO compras_creditos(
+        usuario_id,
+        paquete_id,
+        id_transaccion,
+        estado_pago
+    )
+    VALUES ($1, $2, $3, $4)
+    RETURNING id;
+  `,
 
   crearMovimiento: `
     INSERT INTO movimientos (
       monto,
       saldo_anterior,
       saldo_posterior,
-      descripcion,
-      referencia_id,
-      tipo_referencia,
       billetera_user_id,
       tipo_mov_id
     )
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8);
+    VALUES ($1, $2, $3, $4, $5);
   `,
 
   actualizarSaldoBilletera: `
@@ -72,7 +70,7 @@ export const CreditosSQL = {
     RETURNING saldo_disponible;
   `,
 
-    getResumenCompras: `
+  getResumenCompras: `
     SELECT 
       COALESCE(SUM(p.precio), 0)        AS monto_total,
       COALESCE(SUM(p.cant_creditos), 0) AS creditos_obtenidos,
@@ -82,5 +80,4 @@ export const CreditosSQL = {
     WHERE c.usuario_id = $1
       AND c.estado_pago = 'completado';
   `,
-
 };

@@ -14,25 +14,24 @@ export const IntercambiosSQL = {
     JOIN estado_publicacion e ON e.id = pub.estado_id
     WHERE pub.id = $1
       AND pub.deleted_at IS NULL
-      AND pub.es_visible = TRUE
+      -- ⚠ en el nuevo esquema NO existe pub.es_visible, se elimina ese filtro
   `,
 
   // RF-18: iniciar propuesta
   crearPropuesta: `
-  INSERT INTO propuesta (
-    estado,
-    mensaje,
-    publicacion_id,
-    demandante_id,
-    monto_ofertado,
-    ultimo_actor_id,
-    created_at,
-    updated_at
-  )
-  VALUES ('pendiente', $1, $2, $3, $4, $5, now(), now())
-  RETURNING *;
-`,
-
+    INSERT INTO propuesta (
+      estado,
+      mensaje,
+      publicacion_id,
+      demandante_id,
+      monto_ofertado,
+      ultimo_actor_id,
+      created_at,
+      updated_at
+    )
+    VALUES ('pendiente', $1, $2, $3, $4, $5, now(), now())
+    RETURNING *;
+  `,
 
   crearMensajeInicial: `
     INSERT INTO mensajes (contenido, propuesta_id, remitente_id, destinatario_id, fecha_envio)
@@ -103,58 +102,57 @@ export const IntercambiosSQL = {
     RETURNING *;
   `,
 
+  // ⚠ retencion_creditos en la nueva DB NO tiene fecha_liberacion
   actualizarRetencionEstado: `
     UPDATE retencion_creditos
-    SET estado = $2,
-        fecha_liberacion = now(),
+    SET estado    = $2,
         updated_at = now()
     WHERE id = $1
     RETURNING *;
   `,
 
-  // Resumen para la página de perfil
+  // Resumen para la página de perfil (propuestas enviadas/recibidas)
   listarResumenUsuario: `
-  SELECT * FROM (
-    SELECT
-      p.id,
-      'enviada'::text AS tipo,
-      p.estado,
-      p.created_at,
-      pub.titulo,
-      p.monto_ofertado   AS monto_ofertado,
-      pub.valor_creditos AS valor_publicacion,
-      pub.id             AS publicacion_id,
-      pub.usuario_id     AS contraparte_id,
-      (p.estado = 'pendiente'
-        AND (p.ultimo_actor_id IS NULL OR p.ultimo_actor_id <> $1)
-      ) AS puede_responder
-    FROM propuesta p
-    JOIN publicaciones pub ON pub.id = p.publicacion_id
-    WHERE p.demandante_id = $1
+    SELECT * FROM (
+      SELECT
+        p.id,
+        'enviada'::text AS tipo,
+        p.estado,
+        p.created_at,
+        pub.titulo,
+        p.monto_ofertado   AS monto_ofertado,
+        pub.valor_creditos AS valor_publicacion,
+        pub.id             AS publicacion_id,
+        pub.usuario_id     AS contraparte_id,
+        (p.estado = 'pendiente'
+          AND (p.ultimo_actor_id IS NULL OR p.ultimo_actor_id <> $1)
+        ) AS puede_responder
+      FROM propuesta p
+      JOIN publicaciones pub ON pub.id = p.publicacion_id
+      WHERE p.demandante_id = $1
 
-    UNION ALL
+      UNION ALL
 
-    SELECT
-      p.id,
-      'recibida'::text AS tipo,
-      p.estado,
-      p.created_at,
-      pub.titulo,
-      p.monto_ofertado   AS monto_ofertado,
-      pub.valor_creditos AS valor_publicacion,
-      pub.id             AS publicacion_id,
-      p.demandante_id    AS contraparte_id,
-      (p.estado = 'pendiente'
-        AND (p.ultimo_actor_id IS NULL OR p.ultimo_actor_id <> $1)
-      ) AS puede_responder
-    FROM propuesta p
-    JOIN publicaciones pub ON pub.id = p.publicacion_id
-    WHERE pub.usuario_id = $1
-  ) t
-  ORDER BY created_at DESC, id DESC
-  LIMIT $2 OFFSET $3;
-`,
-
+      SELECT
+        p.id,
+        'recibida'::text AS tipo,
+        p.estado,
+        p.created_at,
+        pub.titulo,
+        p.monto_ofertado   AS monto_ofertado,
+        pub.valor_creditos AS valor_publicacion,
+        pub.id             AS publicacion_id,
+        p.demandante_id    AS contraparte_id,
+        (p.estado = 'pendiente'
+          AND (p.ultimo_actor_id IS NULL OR p.ultimo_actor_id <> $1)
+        ) AS puede_responder
+      FROM propuesta p
+      JOIN publicaciones pub ON pub.id = p.publicacion_id
+      WHERE pub.usuario_id = $1
+    ) t
+    ORDER BY created_at DESC, id DESC
+    LIMIT $2 OFFSET $3;
+  `,
 
   listarIntercambiosUsuario: `
     SELECT
@@ -170,33 +168,33 @@ export const IntercambiosSQL = {
     LIMIT $2 OFFSET $3;
   `,
 
-rechazarPropuesta: `
-  UPDATE propuesta
-  SET estado = 'rechazada',
-      fecha_respuesta = now(),
-      updated_at = now()
-  WHERE id = $1
-  RETURNING *;
-`,
+  rechazarPropuesta: `
+    UPDATE propuesta
+    SET estado = 'rechazada',
+        fecha_respuesta = now(),
+        updated_at = now()
+    WHERE id = $1
+    RETURNING *;
+  `,
 
-actualizarContraoferta: `
-  UPDATE propuesta
-  SET monto_ofertado = $2,
-      mensaje        = $3,
-      ultimo_actor_id= $4,
-      updated_at     = now()
-  WHERE id = $1
-    AND estado = 'pendiente'
-  RETURNING *;
-`,
+  actualizarContraoferta: `
+    UPDATE propuesta
+    SET monto_ofertado = $2,
+        mensaje        = $3,
+        ultimo_actor_id= $4,
+        updated_at     = now()
+    WHERE id = $1
+      AND estado = 'pendiente'
+    RETURNING *;
+  `,
 
-crearMensajePropuesta: `
-  INSERT INTO mensajes (contenido, propuesta_id, remitente_id, destinatario_id, fecha_envio)
-  VALUES ($1, $2, $3, $4, now())
-  RETURNING *;
-`,
+  crearMensajePropuesta: `
+    INSERT INTO mensajes (contenido, propuesta_id, remitente_id, destinatario_id, fecha_envio)
+    VALUES ($1, $2, $3, $4, now())
+    RETURNING *;
+  `,
 
- getPropuestaParaAceptar: `
+  getPropuestaParaAceptar: `
     SELECT
       p.*,
       pub.valor_creditos,
@@ -209,15 +207,17 @@ crearMensajePropuesta: `
     JOIN publicaciones pub ON pub.id = p.publicacion_id
     JOIN billetera b       ON b.usuario_id = p.demandante_id
     WHERE p.id = $1
-    FOR UPDATE
+    FOR UPDATE;
   `,
+
   marcarPropuestaAceptada: `
     UPDATE propuesta
     SET estado = 'aceptada',
         fecha_respuesta = now(),
         updated_at = now()
-    WHERE id = $1
+    WHERE id = $1;
   `,
+
   crearIntercambio: `
     INSERT INTO intercambios
       (monto_credito, fecha_de_expiracion, propuesta_aceptada_id, comprador_id, vendedor_id)
@@ -225,11 +225,13 @@ crearMensajePropuesta: `
       ($1, now() + interval '7 days', $2, $3, $4)
     RETURNING *;
   `,
+
   crearRetencion: `
     INSERT INTO retencion_creditos (monto_reservado, billetera_demandante, intercambio_id)
     VALUES ($1, $2, $3)
     RETURNING *;
   `,
+
   actualizarBilletera: `
     UPDATE billetera
     SET saldo_disponible = $2,
@@ -237,18 +239,21 @@ crearMensajePropuesta: `
         updated_at = now()
     WHERE id = $1;
   `,
+
   getTipoMovByCodigo: `
-    SELECT id FROM tipos_movimiento
-    WHERE codigo = $1 AND es_activo = true
+    SELECT id
+    FROM tipos_movimiento
+    WHERE codigo = $1
+      AND es_activo = true
     LIMIT 1;
   `,
+
   insertarMovimiento: `
     INSERT INTO movimientos
-      (monto, saldo_anterior, saldo_posterior,
-       descripcion, referencia_id, tipo_referencia,
-       billetera_user_id, tipo_mov_id)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8);
+      (monto, saldo_anterior, saldo_posterior, billetera_user_id, tipo_mov_id)
+    VALUES ($1, $2, $3, $4, $5);
   `,
+
   insertarBitacora: `
     INSERT INTO bitacora_intercambios
       (tipo_evento, estado_actual, propuesta_id, intercambio_id,
@@ -256,6 +261,4 @@ crearMensajePropuesta: `
        observaciones, metadata)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10);
   `,
-
-
 };
